@@ -9,8 +9,8 @@ import io.micronaut.http.annotation.*;
 import io.micronaut.http.client.RxStreamingHttpClient;
 import io.reactivex.Flowable;
 import io.reactivex.Single;
+import io.reactivex.functions.Function;
 
-import javax.annotation.Nullable;
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -39,10 +39,35 @@ public class HelloController {
     @Put(value = "/uploadByteArray", consumes = MediaType.ALL, produces = MediaType.TEXT_PLAIN)
     public Flowable<HttpResponse<String>> uploadByteArray(@Body final Flowable<byte[]> contents) {
 
-        MutableHttpRequest<?> request = HttpRequest.PUT("/put", contents)
+            return contents.map(bytes -> HttpResponse.ok(Long.toString(bytes.length)));
+
+//        MutableHttpRequest<?> request = HttpRequest.PUT("/put", contents)
+//                .contentType(MediaType.APPLICATION_OCTET_STREAM_TYPE);
+//
+//        return rxclient.exchange(request, String.class);
+
+    }
+
+
+    @Get(value = "/downloadByteBuffer/{n}", consumes = MediaType.ALL, produces = MediaType.APPLICATION_OCTET_STREAM)
+    public Flowable<ByteBuffer<?>> downloadByteBuffer(int n) {
+
+        MutableHttpRequest<?> request = HttpRequest.GET("/bytes/"+n)
                 .contentType(MediaType.APPLICATION_OCTET_STREAM_TYPE);
 
-        return rxclient.exchange(request, String.class);
+        return rxclient.exchangeStream(request)
+                .map(response -> response.body());
+
+    }
+
+    @Get(value = "/downloadByteArray/{n}", consumes = MediaType.ALL, produces = MediaType.APPLICATION_OCTET_STREAM)
+    public Flowable<byte[]> downloadByteArray(int n) {
+
+        MutableHttpRequest<?> request = HttpRequest.GET("/bytes/"+n)
+                .contentType(MediaType.APPLICATION_OCTET_STREAM_TYPE);
+
+        return rxclient.exchangeStream(request)
+                .map(response -> response.body().toByteArray());
 
     }
 
